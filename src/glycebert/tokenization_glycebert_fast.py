@@ -1,4 +1,5 @@
-from pypinyin import pinyin, Style
+# -*- coding: utf-8 -*-
+from pypinyin import Style, pinyin
 from transformers.models.bert import BertTokenizerFast
 
 

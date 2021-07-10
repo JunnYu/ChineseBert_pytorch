@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 @file  : glyce_embedding.py
@@ -8,7 +7,6 @@
 @version: 1.0
 @desc  : 【char embedding】+【pinyin embedding】+【glyph embedding】 = fusion embedding
 """
-import os
 
 import torch
 from torch import nn
@@ -24,11 +22,6 @@ class FusionBertEmbeddings(nn.Module):
 
     def __init__(self, config):
         super(FusionBertEmbeddings, self).__init__()
-        config_path = os.path.join(config.name_or_path, "config")
-        font_files = []
-        for file in os.listdir(config_path):
-            if file.endswith(".npy"):
-                font_files.append(os.path.join(config_path, file))
         self.word_embeddings = nn.Embedding(
             config.vocab_size, config.hidden_size, padding_idx=0
         )
@@ -39,15 +32,17 @@ class FusionBertEmbeddings(nn.Module):
             config.type_vocab_size, config.hidden_size
         )
         self.pinyin_embeddings = PinyinEmbedding(
+            pinyin_map_len=config.pinyin_map_len,
             embedding_size=128,
             pinyin_out_dim=config.hidden_size,
-            config_path=config_path,
         )
-        self.glyph_embeddings = GlyphEmbedding(font_npy_files=font_files)
+        self.glyph_embeddings = GlyphEmbedding(
+            config.vocab_size, config.glyph_embedding_dim
+        )
 
         # self.LayerNorm is not snake-cased to stick with TensorFlow models variable name and be able to load
         # any TensorFlow checkpoint file
-        self.glyph_map = nn.Linear(1728, config.hidden_size)
+        self.glyph_map = nn.Linear(config.glyph_embedding_dim, config.hidden_size)
         self.map_fc = nn.Linear(config.hidden_size * 3, config.hidden_size)
         self.LayerNorm = nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)

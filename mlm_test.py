@@ -1,8 +1,9 @@
 import torch
-from glycebert import GlyceBertTokenizerFast, GlyceBertForMaskedLM
+
+from glycebert import GlyceBertForMaskedLM, GlyceBertTokenizerFast
 
 pretrained_tokenizer_name = "junnyu/ChineseBERT-base"
-pretrained_model_name = "shannoai/ChineseBERT-base"
+pretrained_model_name = "ShannonAI/ChineseBERT-base"
 
 tokenizer = GlyceBertTokenizerFast.from_pretrained(pretrained_tokenizer_name)
 chinese_bert = GlyceBertForMaskedLM.from_pretrained(pretrained_model_name)

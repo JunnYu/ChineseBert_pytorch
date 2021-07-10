@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 @file  : pinyin.py
@@ -8,15 +7,13 @@
 @version: 1.0
 @desc  : pinyin embedding
 """
-import json
-import os
 
 from torch import nn
 from torch.nn import functional as F
 
 
 class PinyinEmbedding(nn.Module):
-    def __init__(self, embedding_size: int, pinyin_out_dim: int, config_path):
+    def __init__(self, pinyin_map_len: int, embedding_size: int, pinyin_out_dim: int):
         """
             Pinyin Embedding Module
         Args:
@@ -24,10 +21,9 @@ class PinyinEmbedding(nn.Module):
             pinyin_out_dim: kernel number of conv
         """
         super(PinyinEmbedding, self).__init__()
-        with open(os.path.join(config_path, "pinyin_map.json")) as fin:
-            pinyin_dict = json.load(fin)
+
         self.pinyin_out_dim = pinyin_out_dim
-        self.embedding = nn.Embedding(len(pinyin_dict["idx2char"]), embedding_size)
+        self.embedding = nn.Embedding(pinyin_map_len, embedding_size)
         self.conv = nn.Conv1d(
             in_channels=embedding_size,
             out_channels=self.pinyin_out_dim,

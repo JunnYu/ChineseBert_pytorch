@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
 @file  : modeling_glycebert.py
@@ -13,24 +12,23 @@ import warnings
 import torch
 from torch import nn
 from torch.nn import CrossEntropyLoss, MSELoss
-from transformers.models.bert.modeling_bert import (
-    BertEncoder,
-    BertPooler,
-    BertOnlyMLMHead,
-    BertPreTrainedModel,
-    BertModel,
-)
-
 from transformers.modeling_outputs import (
     BaseModelOutputWithPooling,
     MaskedLMOutput,
-    SequenceClassifierOutput,
     QuestionAnsweringModelOutput,
+    SequenceClassifierOutput,
     TokenClassifierOutput,
 )
+from transformers.models.bert.modeling_bert import (
+    BertEncoder,
+    BertModel,
+    BertOnlyMLMHead,
+    BertPooler,
+    BertPreTrainedModel,
+)
 
-from glycebert.fusion_embedding import FusionBertEmbeddings
 from glycebert.classifier import BertMLP
+from glycebert.fusion_embedding import FusionBertEmbeddings
 
 
 class GlyceBertModel(BertModel):

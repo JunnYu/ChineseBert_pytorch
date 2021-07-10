@@ -19,16 +19,23 @@ pip install git+https://github.com/JunnYu/GlyceBert_pytorch.git
 # Usage
 ```python
 import torch
-from glycebert import GlyceBertTokenizerFast, GlyceBertForMaskedLM
+from transformers import BertConfig as GlyceBertConfig
 
+from glycebert import GlyceBertForMaskedLM, GlyceBertTokenizerFast
+
+# 使用我这个里面的tokenizer config和model config
 pretrained_tokenizer_name = "junnyu/ChineseBERT-base"
 pretrained_model_name = "ShannonAI/ChineseBERT-base"
 
 tokenizer = GlyceBertTokenizerFast.from_pretrained(pretrained_tokenizer_name)
-chinese_bert = GlyceBertForMaskedLM.from_pretrained(pretrained_model_name)
+config = GlyceBertConfig.from_pretrained(pretrained_tokenizer_name)
+chinese_bert = GlyceBertForMaskedLM.from_pretrained(
+    pretrained_model_name, config=config
+)
 
 text = "北京是[MASK]国的首都。"
 inputs = tokenizer(text, return_tensors="pt")
+print(inputs)
 maskpos = 4
 with torch.no_grad():
     o = chinese_bert(**inputs)

@@ -24,8 +24,8 @@ from transformers import BertConfig as GlyceBertConfig
 from glycebert import GlyceBertForMaskedLM, GlyceBertTokenizerFast
 
 # 使用我这个里面的tokenizer config和model config
-pretrained_tokenizer_name = "junnyu/ChineseBERT-base"
-pretrained_model_name = "ShannonAI/ChineseBERT-base"
+pretrained_tokenizer_name = "junnyu/ChineseBERT-base" #"junnyu/ChineseBERT-large"
+pretrained_model_name = "ShannonAI/ChineseBERT-base" #"ShannonAI/ChineseBERT-large"
 
 tokenizer = GlyceBertTokenizerFast.from_pretrained(pretrained_tokenizer_name)
 config = GlyceBertConfig.from_pretrained(pretrained_tokenizer_name)
@@ -49,7 +49,8 @@ for t, p in zip(pred_tokens, pred_values):
     outputs.append(f"{t}|{round(p,4)}")
 print(outputs)
 
-# ['中|0.711', '我|0.2488', '祖|0.016', '法|0.0057', '美|0.0048', '全|0.0042', '韩|0.0015', '英|0.0011', '两|0.0008', '王|0.0006']
+# base  ['中|0.711', '我|0.2488', '祖|0.016', '法|0.0057', '美|0.0048', '全|0.0042', '韩|0.0015', '英|0.0011', '两|0.0008', '王|0.0006']
+# large ['中|0.8341', '我|0.1479', '祖|0.0157', '全|0.0007', '国|0.0005', '帝|0.0001', '该|0.0001', '法|0.0001', '一|0.0001', '咱|0.0001']
 ```
 
 # Reference

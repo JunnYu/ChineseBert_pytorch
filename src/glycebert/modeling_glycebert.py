@@ -29,8 +29,8 @@ from transformers.modeling_outputs import (
     TokenClassifierOutput,
 )
 
-from models.fusion_embedding import FusionBertEmbeddings
-from models.classifier import BertMLP
+from glycebert.fusion_embedding import FusionBertEmbeddings
+from glycebert.classifier import BertMLP
 
 
 class GlyceBertModel(BertModel):

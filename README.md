@@ -13,7 +13,7 @@ tokenizer = GlyceBertTokenizerFast.from_pretrained(pretrained_tokenizer_name)
 ```bash
 pip install glycebert
 or
-pip install git+https://github.com/JunnYu/GlyceBert_pytorch
+pip install git+https://github.com/JunnYu/GlyceBert_pytorch.git
 ```
 
 # Usage

@@ -4,7 +4,7 @@ setup(
     name="glycebert",
     package_dir={"": "src"},
     packages=find_packages("src"),
-    version="0.0.2",
+    version="0.0.3",
     license="MIT",
     description="GlyceBert_pytorch",
     author="Jun Yu",

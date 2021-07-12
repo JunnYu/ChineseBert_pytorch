@@ -3,7 +3,7 @@ from pypinyin import Style, pinyin
 from transformers.models.bert import BertTokenizerFast
 
 
-class GlyceBertTokenizerFast(BertTokenizerFast):
+class ChineseBertTokenizerFast(BertTokenizerFast):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.pinyin_dict = kwargs.get("pinyin_map")

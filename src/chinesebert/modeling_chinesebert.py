@@ -27,11 +27,11 @@ from transformers.models.bert.modeling_bert import (
     BertPreTrainedModel,
 )
 
-from glycebert.classifier import BertMLP
-from glycebert.fusion_embedding import FusionBertEmbeddings
+from chinesebert.classifier import BertMLP
+from chinesebert.fusion_embedding import FusionBertEmbeddings
 
 
-class GlyceBertModel(BertModel):
+class ChineseBertModel(BertModel):
     r"""
     Outputs: `Tuple` comprising various elements depending on the configuration (config) and inputs:
         **last_hidden_state**: ``torch.FloatTensor`` of shape ``(batch_size, sequence_length, hidden_size)``
@@ -62,7 +62,7 @@ class GlyceBertModel(BertModel):
     """
 
     def __init__(self, config):
-        super(GlyceBertModel, self).__init__(config)
+        super(ChineseBertModel, self).__init__(config)
         self.config = config
 
         self.embeddings = FusionBertEmbeddings(config)
@@ -193,11 +193,11 @@ class GlyceBertModel(BertModel):
         )
 
 
-class GlyceBertForMaskedLM(BertPreTrainedModel):
+class ChineseBertForMaskedLM(BertPreTrainedModel):
     def __init__(self, config):
-        super(GlyceBertForMaskedLM, self).__init__(config)
+        super(ChineseBertForMaskedLM, self).__init__(config)
 
-        self.bert = GlyceBertModel(config)
+        self.bert = ChineseBertModel(config)
         self.cls = BertOnlyMLMHead(config)
 
         self.init_weights()
@@ -285,12 +285,12 @@ class GlyceBertForMaskedLM(BertPreTrainedModel):
         )
 
 
-class GlyceBertForSequenceClassification(BertPreTrainedModel):
+class ChineseBertForSequenceClassification(BertPreTrainedModel):
     def __init__(self, config):
         super().__init__(config)
         self.num_labels = config.num_labels
 
-        self.bert = GlyceBertModel(config)
+        self.bert = ChineseBertModel(config)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.classifier = nn.Linear(config.hidden_size, config.num_labels)
 
@@ -361,7 +361,7 @@ class GlyceBertForSequenceClassification(BertPreTrainedModel):
         )
 
 
-class GlyceBertForQuestionAnswering(BertPreTrainedModel):
+class ChineseBertForQuestionAnswering(BertPreTrainedModel):
     """BERT model for Question Answering (span extraction).
     This module is composed of the BERT model with a linear layer on top of
     the sequence output that computes start_logits and end_logits
@@ -413,7 +413,7 @@ class GlyceBertForQuestionAnswering(BertPreTrainedModel):
         super().__init__(config)
         self.num_labels = config.num_labels
 
-        self.bert = GlyceBertModel(config)
+        self.bert = ChineseBertModel(config)
         self.qa_outputs = nn.Linear(config.hidden_size, config.num_labels)
 
         self.init_weights()
@@ -497,12 +497,12 @@ class GlyceBertForQuestionAnswering(BertPreTrainedModel):
         )
 
 
-class GlyceBertForTokenClassification(BertPreTrainedModel):
+class ChineseBertForTokenClassification(BertPreTrainedModel):
     def __init__(self, config, mlp=False):
         super().__init__(config)
         self.num_labels = config.num_labels
 
-        self.bert = GlyceBertModel(config)
+        self.bert = ChineseBertModel(config)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         if mlp:
             self.classifier = BertMLP(config)

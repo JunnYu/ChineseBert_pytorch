@@ -1,8 +1,8 @@
-# GlyceBert_pytorch
-本项目主要自定义了tokenization_glycebert_fast.py文件中的GlyceBertTokenizerFast代码。从而可以从huggingface.co调用。
+# ChineseBert_pytorch
+本项目主要自定义了tokenization_glycebert_fast.py文件中的ChineseBertTokenizerFast代码。从而可以从huggingface.co调用。
 ```python
 pretrained_tokenizer_name = "junnyu/ChineseBERT-base"
-tokenizer = GlyceBertTokenizerFast.from_pretrained(pretrained_tokenizer_name)
+tokenizer = ChineseBertTokenizerFast.from_pretrained(pretrained_tokenizer_name)
 ```
 
 # Paper
@@ -11,34 +11,29 @@ tokenizer = GlyceBertTokenizerFast.from_pretrained(pretrained_tokenizer_name)
 
 # Install
 ```bash
-pip install glycebert
+pip install chinesebert
 or
-pip install git+https://github.com/JunnYu/GlyceBert_pytorch.git
+pip install git+https://github.com/JunnYu/ChineseBert_pytorch.git
 ```
 
 # Usage
 ```python
 import torch
-from transformers import BertConfig as GlyceBertConfig
-
-from glycebert import GlyceBertForMaskedLM, GlyceBertTokenizerFast
+from transformers import BertConfig as ChineseBertConfig
+from chinesebert import ChineseBertForMaskedLM, ChineseBertTokenizerFast
 
 pretrained_tokenizer_name = "junnyu/ChineseBERT-base"
 pretrained_model_name = "ShannonAI/ChineseBERT-base"
 
-tokenizer = GlyceBertTokenizerFast.from_pretrained(
-    pretrained_tokenizer_name, cache_dir="caches"
-)
-config = GlyceBertConfig.from_pretrained(pretrained_tokenizer_name, cache_dir="caches")
-chinese_bert = GlyceBertForMaskedLM.from_pretrained(
-    pretrained_model_name, config=config, cache_dir="caches"
-)
-
+tokenizer = ChineseBertTokenizerFast.from_pretrained(pretrained_tokenizer_name)
+config = ChineseBertConfig.from_pretrained(pretrained_tokenizer_name)
+chinese_bert = ChineseBertForMaskedLM.from_pretrained(pretrained_model_name, config=config)
 
 text = "北京是[MASK]国的首都。"
 inputs = tokenizer(text, return_tensors="pt")
 print(inputs)
 maskpos = 4
+
 with torch.no_grad():
     o = chinese_bert(**inputs)
     value, index = o.logits.softmax(-1)[0, maskpos].topk(10)

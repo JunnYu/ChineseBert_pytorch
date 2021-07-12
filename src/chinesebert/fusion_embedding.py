@@ -11,8 +11,8 @@
 import torch
 from torch import nn
 
-from glycebert.glyph_embedding import GlyphEmbedding
-from glycebert.pinyin_embedding import PinyinEmbedding
+from chinesebert.glyph_embedding import GlyphEmbedding
+from chinesebert.pinyin_embedding import PinyinEmbedding
 
 
 class FusionBertEmbeddings(nn.Module):

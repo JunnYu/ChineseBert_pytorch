@@ -1,14 +1,14 @@
 import torch
-from transformers import BertConfig as GlyceBertConfig
+from transformers import BertConfig as ChineseBertConfig
 
-from glycebert import GlyceBertForMaskedLM, GlyceBertTokenizerFast
+from chinesebert import ChineseBertForMaskedLM, ChineseBertTokenizerFast
 
 pretrained_tokenizer_name = "junnyu/ChineseBERT-base"
 pretrained_model_name = "ShannonAI/ChineseBERT-base"
 
-tokenizer = GlyceBertTokenizerFast.from_pretrained(pretrained_tokenizer_name)
-config = GlyceBertConfig.from_pretrained(pretrained_tokenizer_name)
-chinese_bert = GlyceBertForMaskedLM.from_pretrained(
+tokenizer = ChineseBertTokenizerFast.from_pretrained(pretrained_tokenizer_name)
+config = ChineseBertConfig.from_pretrained(pretrained_tokenizer_name)
+chinese_bert = ChineseBertForMaskedLM.from_pretrained(
     pretrained_model_name, config=config
 )
 

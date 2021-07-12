@@ -1,5 +1,5 @@
 # ChineseBert_pytorch
-本项目主要自定义了tokenization_glycebert_fast.py文件中的ChineseBertTokenizerFast代码。从而可以从huggingface.co调用。
+本项目主要自定义了tokenization_chinesebert_fast.py文件中的ChineseBertTokenizerFast代码。从而可以从huggingface.co调用。
 ```python
 pretrained_tokenizer_name = "junnyu/ChineseBERT-base"
 tokenizer = ChineseBertTokenizerFast.from_pretrained(pretrained_tokenizer_name)

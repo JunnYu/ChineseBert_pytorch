@@ -104,9 +104,9 @@ class ChineseBertTokenizerFast(BertTokenizerFast):
             pinyin_ids = []
             for offset in batch_offset:
                 if offset[0] in pinyin_locs and offset[1] - offset[0] == 1:
-                    pinyin_ids.append(pinyin_locs[offset[0]])
+                    pinyin_ids.extend(pinyin_locs[offset[0]])
                 else:
-                    pinyin_ids.append([0] * 8)
+                    pinyin_ids.extend([0] * 8)
 
             batch_pinyin_ids.append(pinyin_ids)
 

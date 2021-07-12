@@ -30,5 +30,5 @@ class GlyphEmbedding(nn.Module):
         Returns:
             images: [batch, sentence_length, self.font_num*self.font_size*self.font_size]
         """
-        # return self.embedding(input_ids).view([-1, self.font_num, self.font_size, self.font_size])
+        # return self.embedding(input_ids).reshape([-1, self.font_num, self.font_size, self.font_size])
         return self.embedding(input_ids)

@@ -80,7 +80,9 @@ class FusionBertEmbeddings(nn.Module):
 
         # get char embedding, pinyin embedding and glyph embedding
         word_embeddings = inputs_embeds  # [bs,l,hidden_size]
-        pinyin_embeddings = self.pinyin_embeddings(pinyin_ids)  # [bs,l,hidden_size]
+        pinyin_embeddings = self.pinyin_embeddings(
+            pinyin_ids.reshape(input_shape[0], seq_length, -1)
+        )  # [bs,l,hidden_size]
         glyph_embeddings = self.glyph_map(
             self.glyph_embeddings(input_ids)
         )  # [bs,l,hidden_size]

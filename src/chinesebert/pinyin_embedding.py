@@ -46,7 +46,7 @@ class PinyinEmbedding(nn.Module):
         )  # [bs,sentence_length,pinyin_locs,embed_size]
 
         bs, sentence_length, pinyin_locs, embed_size = embed.shape
-        view_embed = embed.view(
+        view_embed = embed.reshape(
             -1, pinyin_locs, embed_size
         )  # [(bs*sentence_length),pinyin_locs,embed_size]
         input_embed = view_embed.permute(
@@ -57,6 +57,6 @@ class PinyinEmbedding(nn.Module):
         pinyin_embed = F.max_pool1d(
             pinyin_conv, pinyin_conv.shape[-1]
         )  # [(bs*sentence_length),pinyin_out_dim,1]
-        return pinyin_embed.view(
+        return pinyin_embed.reshape(
             bs, sentence_length, self.pinyin_out_dim
         )  # [bs,sentence_length,pinyin_out_dim]

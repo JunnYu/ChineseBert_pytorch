@@ -268,7 +268,8 @@ class ChineseBertForMaskedLM(BertPreTrainedModel):
         if labels is not None:
             loss_fct = CrossEntropyLoss()  # -100 index = padding token
             masked_lm_loss = loss_fct(
-                prediction_scores.view(-1, self.config.vocab_size), labels.view(-1)
+                prediction_scores.reshape(-1, self.config.vocab_size),
+                labels.reshape(-1),
             )
 
         if not return_dict:
@@ -344,10 +345,10 @@ class ChineseBertForSequenceClassification(BertPreTrainedModel):
             if self.num_labels == 1:
                 #  We are doing regression
                 loss_fct = MSELoss()
-                loss = loss_fct(logits.view(-1), labels.view(-1))
+                loss = loss_fct(logits.reshape(-1), labels.reshape(-1))
             else:
                 loss_fct = CrossEntropyLoss()
-                loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+                loss = loss_fct(logits.reshape(-1, self.num_labels), labels.reshape(-1))
 
         if not return_dict:
             output = (logits,) + outputs[2:]
@@ -557,16 +558,16 @@ class ChineseBertForTokenClassification(BertPreTrainedModel):
             loss_fct = CrossEntropyLoss()
             # Only keep the active parts of the loss
             if attention_mask is not None:
-                active_loss = attention_mask.view(-1) == 1
-                active_logits = logits.view(-1, self.num_labels)
+                active_loss = attention_mask.reshape(-1) == 1
+                active_logits = logits.reshape(-1, self.num_labels)
                 active_labels = torch.where(
                     active_loss,
-                    labels.view(-1),
+                    labels.reshape(-1),
                     torch.tensor(loss_fct.ignore_index).type_as(labels),
                 )
                 loss = loss_fct(active_logits, active_labels)
             else:
-                loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+                loss = loss_fct(logits.reshape(-1, self.num_labels), labels.reshape(-1))
 
         if not return_dict:
             output = (logits,) + outputs[2:]

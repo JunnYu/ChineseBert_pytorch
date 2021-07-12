@@ -72,37 +72,42 @@ class ChineseBertTokenizerFast(BertTokenizerFast):
 
     def convert_text_to_pinyin_ids(self, text, offset_mapping, single):
         # get pinyin of a sentence
-        pinyin_list = pinyin(
-            text,
-            style=Style.TONE3,
-            heteronym=True,
-            errors=lambda x: [["not chinese"] for _ in x],
-        )
-        pinyin_locs = {}
-        # get pinyin of each location
-        for index, item in enumerate(pinyin_list):
-            pinyin_string = item[0]
-            # not a Chinese character, pass
-            if pinyin_string == "not chinese":
-                continue
-            if pinyin_string in self.pinyin2tensor:
-                pinyin_locs[index] = self.pinyin2tensor[pinyin_string]
-            else:
-                ids = [0] * 8
-                for i, p in enumerate(pinyin_string):
-                    if p not in self.pinyin_dict["char2idx"]:
-                        ids = [0] * 8
-                        break
-                    ids[i] = self.pinyin_dict["char2idx"][p]
-                pinyin_locs[index] = ids
-
-        batch_pinyin_ids = []
         if single:
+            text = [text]
             offset_mapping = [offset_mapping]
 
-        for batch_offset in offset_mapping:
+        batch_pinyin_locs = []
+        for each_text in text:
+            pinyin_list = pinyin(
+                each_text,
+                style=Style.TONE3,
+                heteronym=True,
+                errors=lambda x: [["not chinese"] for _ in x],
+            )
+            pinyin_locs = {}
+            # get pinyin of each location
+            for index, item in enumerate(pinyin_list):
+                pinyin_string = item[0]
+                # not a Chinese character, pass
+                if pinyin_string == "not chinese":
+                    continue
+                if pinyin_string in self.pinyin2tensor:
+                    pinyin_locs[index] = self.pinyin2tensor[pinyin_string]
+                else:
+                    ids = [0] * 8
+                    for i, p in enumerate(pinyin_string):
+                        if p not in self.pinyin_dict["char2idx"]:
+                            ids = [0] * 8
+                            break
+                        ids[i] = self.pinyin_dict["char2idx"][p]
+                    pinyin_locs[index] = ids
+            batch_pinyin_locs.append(pinyin_locs)
+
+        batch_pinyin_ids = []
+
+        for offset_map, pinyin_locs in zip(offset_mapping, batch_pinyin_locs):
             pinyin_ids = []
-            for offset in batch_offset:
+            for offset in offset_map:
                 if offset[0] in pinyin_locs and offset[1] - offset[0] == 1:
                     pinyin_ids.extend(pinyin_locs[offset[0]])
                 else:

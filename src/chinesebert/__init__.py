@@ -1,3 +1,5 @@
+from chinesebert import jy_utils
+from chinesebert.configuration_chinesebert import ChineseBertConfig
 from chinesebert.modeling_chinesebert import (
     ChineseBertForMaskedLM,
     ChineseBertForQuestionAnswering,
@@ -5,4 +7,5 @@ from chinesebert.modeling_chinesebert import (
     ChineseBertForTokenClassification,
     ChineseBertModel,
 )
+from chinesebert.padding import DataCollatorForChineseBERT
 from chinesebert.tokenization_chinesebert_fast import ChineseBertTokenizerFast

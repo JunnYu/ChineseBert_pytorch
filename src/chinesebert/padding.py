@@ -15,7 +15,7 @@ class DataCollatorForChineseBERT:
     pad_to_multiple_of: Optional[int] = None
 
     def __call__(self, features):
-        batch = self.tokenizer.pad(
+        batch = self.tokenizer.pad_new(
             features,
             padding=self.padding,
             max_length=self.max_length,
@@ -24,7 +24,7 @@ class DataCollatorForChineseBERT:
             model_input_names=["input_ids", "token_type_ids", "attention_mask"],
         )
         # batch_pinyin_ids
-        batch_pinyin_ids = self.tokenizer.pad(
+        batch_pinyin_ids = self.tokenizer.pad_new(
             features,
             padding="max_length",
             max_length=8 * batch.input_ids.size(1),

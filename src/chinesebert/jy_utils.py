@@ -60,7 +60,7 @@ def to(self, device: Union[str, "torch.device"]) -> "BatchEncoding":
 
 
 @patch_to(PreTrainedTokenizerBase)
-def pad(
+def pad_new(
     self,
     encoded_inputs: Union[
         BatchEncoding,

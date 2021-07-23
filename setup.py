@@ -4,7 +4,7 @@ setup(
     name="chinesebert",
     package_dir={"": "src"},
     packages=find_packages("src"),
-    version="0.0.3",
+    version="0.0.4",
     license="MIT",
     description="ChineseBert_pytorch",
     author="Jun Yu",

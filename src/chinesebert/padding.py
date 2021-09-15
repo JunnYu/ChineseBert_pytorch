@@ -24,6 +24,7 @@ class DataCollatorForChineseBERT:
             model_input_names=["input_ids", "token_type_ids", "attention_mask"],
         )
         # batch_pinyin_ids
+
         batch_pinyin_ids = self.tokenizer.pad_new(
             features,
             padding="max_length",

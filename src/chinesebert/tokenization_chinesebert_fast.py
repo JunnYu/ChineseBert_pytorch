@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from collections import defaultdict
+
+import numpy as np
 from pypinyin import Style, pinyin
 from transformers.models.bert import BertTokenizerFast
 
@@ -9,6 +12,7 @@ class ChineseBertTokenizerFast(BertTokenizerFast):
         self.pinyin_dict = kwargs.get("pinyin_map")
         self.id2pinyin = kwargs.get("id2pinyin")
         self.pinyin2tensor = kwargs.get("pinyin2tensor")
+        self.special_tokens_pinyin_ids = [0] * 8
 
     def __call__(
         self,
@@ -32,9 +36,9 @@ class ChineseBertTokenizerFast(BertTokenizerFast):
         **kwargs
     ):
         if isinstance(text, str):
-            single = True
+            is_batched = False
         else:
-            single = False
+            is_batched = True
 
         tokenizer_outputs = super().__call__(
             text=text,
@@ -56,27 +60,92 @@ class ChineseBertTokenizerFast(BertTokenizerFast):
             verbose=verbose,
             **kwargs
         )
-        tokenizer_outputs["pinyin_ids"] = self.convert_text_to_pinyin_ids(
-            text, tokenizer_outputs.offset_mapping, single
-        )
+
+        if text_pair:
+            pinyins_text = self.get_pinyin_ids(
+                text, tokenizer_outputs.offset_mapping1, is_batched
+            )
+            pinyins_text_pair = self.get_pinyin_ids(
+                text_pair, tokenizer_outputs.offset_mapping2, is_batched
+            )
+        else:
+            pinyins_text = self.get_pinyin_ids(
+                text, tokenizer_outputs.offset_mapping1, is_batched
+            )
+
+        if is_batched:
+            if text_pair:
+                tokenizer_outputs["pinyin_ids"] = []
+                for pinyin1, pingyin2 in zip(pinyins_text, pinyins_text_pair):
+                    tokenizer_outputs["pinyin_ids"].append(
+                        self.build_pinyin_ids_with_special_tokens(
+                            pinyin1, pingyin2, max_length=max_length
+                        )
+                    )
+            else:
+                tokenizer_outputs["pinyin_ids"] = []
+                for pinyin1 in pinyins_text:
+                    tokenizer_outputs["pinyin_ids"].append(
+                        self.build_pinyin_ids_with_special_tokens(
+                            pinyin1, max_length=max_length
+                        )
+                    )
+        else:
+            if text_pair:
+                tokenizer_outputs[
+                    "pinyin_ids"
+                ] = self.build_pinyin_ids_with_special_tokens(
+                    pinyins_text, pinyins_text_pair, max_length=max_length
+                )
+            else:
+                tokenizer_outputs[
+                    "pinyin_ids"
+                ] = self.build_pinyin_ids_with_special_tokens(
+                    pinyins_text, max_length=max_length
+                )
 
         tokenizer_outputs.convert_to_tensors(
             tensor_type=return_tensors,
-            prepend_batch_axis=return_tensors is not None and single,
+            prepend_batch_axis=return_tensors is not None and not is_batched,
         )
 
         if not return_offsets_mapping:
             del tokenizer_outputs["offset_mapping"]
+            if "offset_mapping1" in tokenizer_outputs:
+                del tokenizer_outputs["offset_mapping1"]
+            if "offset_mapping2" in tokenizer_outputs:
+                del tokenizer_outputs["offset_mapping2"]
 
         return tokenizer_outputs
 
-    def convert_text_to_pinyin_ids(self, text, offset_mapping, single):
-        # get pinyin of a sentence
-        if single:
+    def build_pinyin_ids_with_special_tokens(
+        self, pinyin_ids_0, pinyin_ids_1=None, max_length=512
+    ):
+        if pinyin_ids_1 is None:
+            if max_length is not None and len(pinyin_ids_0) > (max_length - 2) * 8:
+                pinyin_ids_0 = pinyin_ids_0[: 8 * (max_length - 2)]
+            return (
+                self.special_tokens_pinyin_ids
+                + pinyin_ids_0
+                + self.special_tokens_pinyin_ids
+            )
+        else:
+            pinyin_tokens = pinyin_ids_0 + self.special_tokens_pinyin_ids + pinyin_ids_1
+            if max_length is not None and len(pinyin_tokens) > (max_length - 2) * 8:
+                pinyin_tokens = pinyin_tokens[: 8 * (max_length - 2)]
+            return (
+                self.special_tokens_pinyin_ids
+                + pinyin_tokens
+                + self.special_tokens_pinyin_ids
+            )
+
+    def get_pinyin_ids(self, text, offset_mapping, is_batched=False):
+        if not is_batched:
             text = [text]
             offset_mapping = [offset_mapping]
 
         batch_pinyin_locs = []
+
         for each_text in text:
             pinyin_list = pinyin(
                 each_text,
@@ -108,11 +177,71 @@ class ChineseBertTokenizerFast(BertTokenizerFast):
         for offset_map, pinyin_locs in zip(offset_mapping, batch_pinyin_locs):
             pinyin_ids = []
             for offset in offset_map:
-                if offset[0] in pinyin_locs and offset[1] - offset[0] == 1:
+                if offset[1] - offset[0] != 1:
+                    pinyin_ids.extend([0] * 8)
+                    continue
+                if offset[0] in pinyin_locs:
                     pinyin_ids.extend(pinyin_locs[offset[0]])
                 else:
                     pinyin_ids.extend([0] * 8)
 
             batch_pinyin_ids.append(pinyin_ids)
 
-        return batch_pinyin_ids[0] if single else batch_pinyin_ids
+        return batch_pinyin_ids if is_batched else batch_pinyin_ids[0]
+
+    def _convert_encoding(
+        self,
+        encoding,
+        return_token_type_ids=None,
+        return_attention_mask=None,
+        return_overflowing_tokens: bool = False,
+        return_special_tokens_mask: bool = False,
+        return_offsets_mapping: bool = False,
+        return_length: bool = False,
+        verbose: bool = True,
+    ):
+        """
+        Convert the encoding representation (from low-level HuggingFace tokenizer output) to a python Dict and a list
+        of encodings, take care of building a batch from overflowing tokens.
+
+        Overflowing tokens are converted to additional examples (like batches) so the output values of the dict are
+        lists (overflows) of lists (tokens).
+
+        Output shape: (overflows, sequence length)
+        """
+        if return_token_type_ids is None:
+            return_token_type_ids = "token_type_ids" in self.model_input_names
+        if return_attention_mask is None:
+            return_attention_mask = "attention_mask" in self.model_input_names
+
+        if return_overflowing_tokens and encoding.overflowing is not None:
+            encodings = [encoding] + encoding.overflowing
+        else:
+            encodings = [encoding]
+
+        encoding_dict = defaultdict(list)
+
+        for e in encodings:
+            encoding_dict["input_ids"].append(e.ids)
+
+            if return_token_type_ids:
+                encoding_dict["token_type_ids"].append(e.type_ids)
+            if return_attention_mask:
+                encoding_dict["attention_mask"].append(e.attention_mask)
+            if return_special_tokens_mask:
+                encoding_dict["special_tokens_mask"].append(e.special_tokens_mask)
+            if return_offsets_mapping:
+                encoding_dict["offset_mapping"].append(e.offsets)
+                index = np.where(np.array(e.special_tokens_mask) == 1)[0]
+                encoding_dict["offset_mapping1"].append(
+                    e.offsets[index[0] + 1 : index[1]]
+                )
+                if len(index) > 2:
+                    encoding_dict["offset_mapping2"].append(
+                        e.offsets[index[-2] + 1 : index[-1]]
+                    )
+
+            if return_length:
+                encoding_dict["length"].append(len(e.ids))
+
+        return encoding_dict, encodings

@@ -121,6 +121,22 @@ tensor([[ 0,  0,  0,  0,  0,  0,  0,  0, 11, 26,  2,  0,  0,  0,  0,  0, 17, 26,
        device='cuda:0')}
 """
 ```
+## tokenizer批量
+```python
+from chinesebert import ChineseBertTokenizerFast
+
+tokenizer = ChineseBertTokenizerFast.from_pretrained("junnyu/ChineseBERT-base")
+
+textlist1 = ["弗洛伊德的悲剧凸显了在美国和世界范围", "紧迫性和重要性，国际社会必须立", "那些存在严重种族主义、种族歧视", "中方对巴基斯坦开普省发"]
+textlist2 = ["紧迫性和重要性，国际社会必须立", "那些存在严重种族主义、种族歧视", "中方对巴基斯坦开普省发", "弗洛伊德的悲剧凸显了在美国和世界范围"]
+batch = tokenizer(textlist1,textlist2,padding=True,max_length=100,return_tensors="pt")
+for k,v in batch.items():
+    print(k,v.shape)
+input_ids torch.Size([4, 36])
+token_type_ids torch.Size([4, 36])
+attention_mask torch.Size([4, 36])
+pinyin_ids torch.Size([4, 288])
+```
 
 # Reference
 https://github.com/ShannonAI/ChineseBert

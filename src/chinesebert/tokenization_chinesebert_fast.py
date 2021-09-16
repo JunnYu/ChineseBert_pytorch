@@ -74,7 +74,7 @@ class ChineseBertTokenizerFast(BertTokenizerFast):
             )
 
         if padding:
-            pad_to_max_len = len(tokenizer_outputs["input_ids"][0])
+            pad_to_max_len = len(tokenizer_outputs["input_ids"][0]) if is_batched else len(tokenizer_outputs["input_ids"])
         else:
             pad_to_max_len = None
         if is_batched:

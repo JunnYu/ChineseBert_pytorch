@@ -35,6 +35,7 @@ class ChineseBertTokenizerFast(BertTokenizerFast):
         verbose=True,
         **kwargs
     ):
+
         if isinstance(text, str):
             is_batched = False
         else:
@@ -58,9 +59,23 @@ class ChineseBertTokenizerFast(BertTokenizerFast):
             return_offsets_mapping=True,
             return_length=return_length,
             verbose=verbose,
-            **kwargs
+            **kwargs,
         )
-
+        (
+            padding_strategy,
+            truncation_strategy,
+            max_length,
+            kwargs,
+        ) = self._get_padding_truncation_strategies(
+            padding=padding,
+            truncation=truncation,
+            max_length=max_length,
+            pad_to_multiple_of=pad_to_multiple_of,
+            verbose=verbose,
+            **kwargs,
+        )
+        padding_strategy = padding_strategy.value
+        truncation_strategy = truncation_strategy.value
         if text_pair:
             pinyins_text = self.get_pinyin_ids(
                 text, tokenizer_outputs.offset_mapping1, is_batched
@@ -73,17 +88,26 @@ class ChineseBertTokenizerFast(BertTokenizerFast):
                 text, tokenizer_outputs.offset_mapping1, is_batched
             )
 
-        if padding:
-            pad_to_max_len = len(tokenizer_outputs["input_ids"][0]) if is_batched else len(tokenizer_outputs["input_ids"])
+        if padding_strategy in ["longest", "max_length"]:
+            pad_to_max_len = (
+                len(tokenizer_outputs["input_ids"][0])
+                if is_batched
+                else len(tokenizer_outputs["input_ids"])
+            )
         else:
             pad_to_max_len = None
+
         if is_batched:
             if text_pair:
                 tokenizer_outputs["pinyin_ids"] = []
                 for pinyin1, pingyin2 in zip(pinyins_text, pinyins_text_pair):
                     tokenizer_outputs["pinyin_ids"].append(
                         self.build_pinyin_ids_with_special_tokens(
-                            pinyin1, pingyin2, max_length=max_length, pad_to_max_len = pad_to_max_len
+                            pinyin1,
+                            pingyin2,
+                            max_length=max_length,
+                            pad_to_max_len=pad_to_max_len,
+                            truncation_strategy=truncation_strategy,
                         )
                     )
             else:
@@ -91,7 +115,10 @@ class ChineseBertTokenizerFast(BertTokenizerFast):
                 for pinyin1 in pinyins_text:
                     tokenizer_outputs["pinyin_ids"].append(
                         self.build_pinyin_ids_with_special_tokens(
-                            pinyin1, max_length=max_length, pad_to_max_len = pad_to_max_len
+                            pinyin1,
+                            max_length=max_length,
+                            pad_to_max_len=pad_to_max_len,
+                            truncation_strategy=truncation_strategy,
                         )
                     )
         else:
@@ -99,53 +126,91 @@ class ChineseBertTokenizerFast(BertTokenizerFast):
                 tokenizer_outputs[
                     "pinyin_ids"
                 ] = self.build_pinyin_ids_with_special_tokens(
-                    pinyins_text, pinyins_text_pair, max_length=max_length, pad_to_max_len = pad_to_max_len
+                    pinyins_text,
+                    pinyins_text_pair,
+                    max_length=max_length,
+                    pad_to_max_len=pad_to_max_len,
+                    truncation_strategy=truncation_strategy,
                 )
             else:
                 tokenizer_outputs[
                     "pinyin_ids"
                 ] = self.build_pinyin_ids_with_special_tokens(
-                    pinyins_text, max_length=max_length, pad_to_max_len = pad_to_max_len
+                    pinyins_text,
+                    max_length=max_length,
+                    pad_to_max_len=pad_to_max_len,
+                    truncation_strategy=truncation_strategy,
                 )
         if "offset_mapping1" in tokenizer_outputs:
             del tokenizer_outputs["offset_mapping1"]
         if "offset_mapping2" in tokenizer_outputs:
             del tokenizer_outputs["offset_mapping2"]
 
-
-        tokenizer_outputs.convert_to_tensors(
-            tensor_type=return_tensors
-        )
+        tokenizer_outputs.convert_to_tensors(tensor_type=return_tensors)
         if not return_offsets_mapping:
             del tokenizer_outputs["offset_mapping"]
-
 
         return tokenizer_outputs
 
     def build_pinyin_ids_with_special_tokens(
-        self, pinyin_ids_0, pinyin_ids_1=None, max_length=512, pad_to_max_len = None
+        self,
+        pinyin_ids_0,
+        pinyin_ids_1=None,
+        max_length=None,
+        pad_to_max_len=None,
+        truncation_strategy="max_length",
     ):
+
+        pair = bool(pinyin_ids_1 is not None)
+        len_pingyin_ids = len(pinyin_ids_0) // 8
+        len_pair_pingyin_ids = len(pinyin_ids_1) // 8 if pair else 0
+        total_len = (
+            len_pingyin_ids
+            + len_pair_pingyin_ids
+            + self.num_special_tokens_to_add(pair=pair)
+        )
+
+        if max_length is not None and total_len > max_length:
+            (
+                pinyin_ids_0,
+                pinyin_ids_1,
+                overflowing_pinyin_ids,
+            ) = self.truncate_pinyin_ids(
+                pinyin_ids_0,
+                pinyin_ids_1,
+                total_len - max_length,
+                truncation_strategy,
+                0,
+            )
+
         if pinyin_ids_1 is None:
-            if max_length is not None and len(pinyin_ids_0) > (max_length - 2) * 8:
-                pinyin_ids_0 = pinyin_ids_0[: 8 * (max_length - 2)]
-
-            data = self.special_tokens_pinyin_ids + pinyin_ids_0 + self.special_tokens_pinyin_ids
+            data = (
+                self.special_tokens_pinyin_ids
+                + pinyin_ids_0
+                + self.special_tokens_pinyin_ids
+            )
             if pad_to_max_len is None:
                 return data
             else:
-                data = data + self.special_tokens_pinyin_ids * (pad_to_max_len - len(data)//8)
+                data = data + self.special_tokens_pinyin_ids * (
+                    pad_to_max_len - len(data) // 8
+                )
                 return data
-                
+
         else:
-            pinyin_tokens = pinyin_ids_0 + self.special_tokens_pinyin_ids + pinyin_ids_1
-            if max_length is not None and len(pinyin_tokens) > (max_length - 2) * 8:
-                pinyin_tokens = pinyin_tokens[: 8 * (max_length - 2)]
-
-            data = self.special_tokens_pinyin_ids + pinyin_tokens + self.special_tokens_pinyin_ids
+            data = (
+                self.special_tokens_pinyin_ids
+                + pinyin_ids_0
+                + self.special_tokens_pinyin_ids
+                + pinyin_ids_1
+                + self.special_tokens_pinyin_ids
+            )
             if pad_to_max_len is None:
                 return data
             else:
-                data = data + self.special_tokens_pinyin_ids * (pad_to_max_len - len(data)//8)
+                data = data + self.special_tokens_pinyin_ids * (
+                    pad_to_max_len - len(data) // 8
+                )
                 return data
 
     def get_pinyin_ids(self, text, offset_mapping, is_batched=False):
@@ -209,15 +274,6 @@ class ChineseBertTokenizerFast(BertTokenizerFast):
         return_length: bool = False,
         verbose: bool = True,
     ):
-        """
-        Convert the encoding representation (from low-level HuggingFace tokenizer output) to a python Dict and a list
-        of encodings, take care of building a batch from overflowing tokens.
-
-        Overflowing tokens are converted to additional examples (like batches) so the output values of the dict are
-        lists (overflows) of lists (tokens).
-
-        Output shape: (overflows, sequence length)
-        """
         if return_token_type_ids is None:
             return_token_type_ids = "token_type_ids" in self.model_input_names
         if return_attention_mask is None:
@@ -247,10 +303,53 @@ class ChineseBertTokenizerFast(BertTokenizerFast):
                 )
                 if len(index) > 2:
                     encoding_dict["offset_mapping2"].append(
-                        e.offsets[index[-2] + 1 : index[-1]]
+                        e.offsets[index[1] + 1 : index[2]]
                     )
 
             if return_length:
                 encoding_dict["length"].append(len(e.ids))
 
         return encoding_dict, encodings
+
+    def truncate_pinyin_ids(
+        self,
+        ids,
+        pair_ids=None,
+        num_tokens_to_remove: int = 0,
+        truncation_strategy="longest_first",
+        stride: int = 0,
+    ):
+        if num_tokens_to_remove <= 0:
+            return ids, pair_ids, []
+
+        overflowing_pinyin_ids = []
+        if truncation_strategy == "longest_first":
+            for _ in range(num_tokens_to_remove):
+                if pair_ids is None or (len(ids) // 8) > (len(pair_ids) // 8):
+                    if not overflowing_pinyin_ids:
+                        window_len = min((len(ids) // 8), stride + 1)
+                    else:
+                        window_len = 1
+                    overflowing_pinyin_ids.extend(ids[-window_len * 8 :])
+                    ids = ids[:-8]
+                else:
+                    if not overflowing_pinyin_ids:
+                        window_len = min((len(pair_ids) // 8), stride + 1)
+                    else:
+                        window_len = 1
+                    overflowing_pinyin_ids.extend(pair_ids[-window_len * 8 :])
+                    pair_ids = pair_ids[:-8]
+
+        elif truncation_strategy == "only_first":
+            if (len(ids) // 8) > num_tokens_to_remove:
+                window_len = min((len(ids) // 8), stride + num_tokens_to_remove)
+                overflowing_pinyin_ids = ids[-window_len * 8 :]
+                ids = ids[: -num_tokens_to_remove * 8]
+
+        elif truncation_strategy == "only_second" and pair_ids is not None:
+            if (len(pair_ids) // 8) > num_tokens_to_remove:
+                window_len = min((len(pair_ids) // 8), stride + num_tokens_to_remove)
+                overflowing_pinyin_ids = pair_ids[-window_len * 8 :]
+                pair_ids = pair_ids[: -num_tokens_to_remove * 8]
+
+        return (ids, pair_ids, overflowing_pinyin_ids)

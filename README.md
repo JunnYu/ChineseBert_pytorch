@@ -52,9 +52,10 @@ print(outputs)
 
 ## data_collate test.py
 ```python
-from chinesebert import ChineseBertTokenizerFast, DataCollatorForChineseBERT
+from transformers import DataCollatorWithPadding
+from chinesebert import ChineseBertTokenizerFast
 tokenizer = ChineseBertTokenizerFast.from_pretrained("junnyu/ChineseBERT-base")
-collate_fn = DataCollatorForChineseBERT(tokenizer)
+collate_fn = DataCollatorWithPadding(tokenizer)
 textlist = ["弗洛伊德的悲剧凸显了在美国和世界范围", "紧迫性和重要性，国际社会必须立", "那些存在严重种族主义、种族歧视", "中方对巴基斯坦开普省发"]
 batch_list = [tokenizer(t) for t in textlist]
 batch = collate_fn(batch_list)

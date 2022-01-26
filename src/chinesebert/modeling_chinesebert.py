@@ -69,7 +69,7 @@ class ChineseBertModel(BertModel):
         self.encoder = BertEncoder(config)
         self.pooler = BertPooler(config)
 
-        self.init_weights()
+        self.post_init()
 
     def forward(
         self,
@@ -200,7 +200,7 @@ class ChineseBertForMaskedLM(BertPreTrainedModel):
         self.bert = ChineseBertModel(config)
         self.cls = BertOnlyMLMHead(config)
 
-        self.init_weights()
+        self.post_init()
 
     def get_output_embeddings(self):
         return self.cls.predictions.decoder
@@ -295,7 +295,7 @@ class ChineseBertForSequenceClassification(BertPreTrainedModel):
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
         self.classifier = nn.Linear(config.hidden_size, config.num_labels)
 
-        self.init_weights()
+        self.post_init()
 
     def forward(
         self,
@@ -417,7 +417,7 @@ class ChineseBertForQuestionAnswering(BertPreTrainedModel):
         self.bert = ChineseBertModel(config)
         self.qa_outputs = nn.Linear(config.hidden_size, config.num_labels)
 
-        self.init_weights()
+        self.post_init()
 
     def forward(
         self,
@@ -510,7 +510,7 @@ class ChineseBertForTokenClassification(BertPreTrainedModel):
         else:
             self.classifier = nn.Linear(config.hidden_size, config.num_labels)
 
-        self.init_weights()
+        self.post_init()
 
     def forward(
         self,

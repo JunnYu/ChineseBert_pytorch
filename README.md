@@ -5,6 +5,10 @@ pretrained_tokenizer_name = "junnyu/ChineseBERT-base"
 tokenizer = ChineseBertTokenizerFast.from_pretrained(pretrained_tokenizer_name)
 ```
 
+# 更新
+- 2022/04/01 添加`tnews`文本分类的例子，详情查看`examples/tnews`文件夹。
+
+
 # Paper
 **[ChineseBERT: Chinese Pretraining Enhanced by Glyph and Pinyin Information](https://arxiv.org/pdf/2106.16038.pdf)**  
 *Zijun Sun, Xiaoya Li, Xiaofei Sun, Yuxian Meng, Xiang Ao, Qing He, Fei Wu and Jiwei Li*

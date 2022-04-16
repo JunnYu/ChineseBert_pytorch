@@ -2,6 +2,7 @@
 - accelerate
 - chinesebert
 - transformers
+- datasets
 
 # 运行
 ```bash
